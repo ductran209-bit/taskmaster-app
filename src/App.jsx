@@ -1,122 +1,134 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React, { useState, useEffect } from 'react';
+import { Plus, Check, Trash2, Calendar, CheckCircle2, Circle } from 'lucide-react';
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [tasks, setTasks] = useState(() => {
+    const savedTasks = localStorage.getItem('taskmaster_tasks');
+    if (savedTasks) {
+      try {
+        return JSON.parse(savedTasks);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return [
+      { id: 1, text: 'Tìm hiểu về Vite & React', completed: true },
+      { id: 2, text: 'Cấu hình Tailwind CSS', completed: true },
+      { id: 3, text: 'Triển khai ứng dụng lên Vercel', completed: false },
+    ];
+  });
+
+  const [input, setInput] = useState('');
+
+  useEffect(() => {
+    localStorage.setItem('taskmaster_tasks', JSON.stringify(tasks));
+  }, [tasks]);
+
+  const addTask = (e) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    const newTask = {
+      id: Date.now(),
+      text: input.trim(),
+      completed: false,
+    };
+    setTasks([newTask, ...tasks]);
+    setInput('');
+  };
+
+  const toggleTask = (id) => {
+    setTasks(
+      tasks.map((task) =>
+        task.id === id ? { ...task, completed: !task.completed } : task
+      )
+    );
+  };
+
+  const deleteTask = (id) => {
+    setTasks(tasks.filter((task) => task.id !== id));
+  };
+
+  const completedCount = tasks.filter((t) => t.completed).length;
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
+    <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col items-center py-10 px-4">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+        
+        {/* Header */}
+        <div className="bg-indigo-600 p-6 text-white">
+          <div className="flex items-center gap-3">
+            <Calendar className="w-8 h-8" />
+            <h1 className="text-2xl font-bold tracking-wide">TaskMaster</h1>
+          </div>
+          <p className="text-indigo-200 text-sm mt-2">
+            Hoàn thành: {completedCount} / {tasks.length} công việc
           </p>
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
 
-      <div className="ticks"></div>
+        {/* Input Form */}
+        <form onSubmit={addTask} className="p-4 border-b border-slate-100 flex gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Thêm công việc mới..."
+            className="flex-1 px-4 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <button
+            type="submit"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl font-medium flex items-center gap-1 transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            Thêm
+          </button>
+        </form>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+        {/* Task List */}
+        <div className="p-4 divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
+          {tasks.length === 0 ? (
+            <p className="text-center text-slate-400 py-6">Chưa có công việc nào!</p>
+          ) : (
+            tasks.map((task) => (
+              <div
+                key={task.id}
+                className="py-3 flex items-center justify-between gap-3 group"
+              >
+                <div
+                  onClick={() => toggleTask(task.id)}
+                  className="flex items-center gap-3 cursor-pointer flex-1"
+                >
+                  {task.completed ? (
+                    <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0" />
+                  ) : (
+                    <Circle className="w-6 h-6 text-slate-300 shrink-0" />
+                  )}
+                  <span
+                    className={`text-base ${
+                      task.completed
+                        ? 'line-through text-slate-400'
+                        : 'text-slate-700'
+                    }`}
+                  >
+                    {task.text}
+                  </span>
+                </div>
+                <button
+                  onClick={() => deleteTask(task.id)}
+                  className="text-slate-300 hover:text-red-500 p-1 transition-colors"
+                  title="Xóa"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
+            ))
+          )}
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        {/* Footer */}
+        <div className="bg-slate-50 p-4 border-t border-slate-100 text-center text-xs text-slate-400">
+          TaskMaster App • Sẵn sàng triển khai lên Vercel 🚀
+        </div>
+      </div>
+    </div>
+  );
 }
-
-export default App
